@@ -8,6 +8,7 @@ import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -32,13 +33,14 @@ import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Controller implements Initializable {
+    private HashMap<Integer, ImageIcon> portAndImageIcons = new HashMap<Integer, ImageIcon>();
+    private Socket socket;
+    private Boolean allowsCamera = true;
     private Webcam webCam = null;
     @FXML
     private ImageView thisClientImageView;
-    private HashMap<Integer, ImageIcon> portAndImageIcons = new HashMap<Integer, ImageIcon>();
-    private Socket socket;
     @FXML
-    private VBox webCamRightPanes;
+    private VBox scrollVBoxPane;
     @FXML
     private ScrollPane scrollPane;
     @Override
@@ -56,7 +58,7 @@ public class Controller implements Initializable {
         }
 
         webCam = Webcam.getDefault();
-        if(!webCam.getLock().isLocked()) {
+        if(!webCam.getLock().isLocked() && allowsCamera) {
             webCam.open();
         }
         startCommunicatingWithServer();
@@ -72,57 +74,79 @@ public class Controller implements Initializable {
             protected Void call() throws IOException {
                 AtomicReference<WritableImage> utility;
                 BufferedImage thisClientImage;
+                ImageView finalClientImageViewToBeShown = null;
+                Image finalClientImageToBeShown;
+                ImageIcon finalClientImageToBeSent;
+                BufferedImage toBeSentImage = null;
+                BufferedImage toBeShownImage;
+                WritableImage wr;
                 int i = 0;
                 while (true) {
                     try {
-                        thisClientImage = webCam.getImage();
-                        if (thisClientImage == null) {
-                            File gifFile = new File("src/sample/giphy.gif");
-                            ArrayList<BufferedImage> bufferedImageArrayList = getFrames(gifFile);
-                            if (i == bufferedImageArrayList.size())
-                                i = 0;
-                            thisClientImage = bufferedImageArrayList.get(i);
-                            i++;
-                        }
-                        Double scaledWidth = Double.valueOf(320);
-                        Double width = Double.valueOf(thisClientImage.getWidth());
-                        Double height = Double.valueOf(thisClientImage.getHeight());
-                        Double finalHeight = scaledWidth*(height/width);
-
-                        BufferedImage toBeSentImage = new BufferedImage(scaledWidth.intValue(),finalHeight.intValue(), BufferedImage.TYPE_INT_RGB);
-                        Graphics2D g2dToBeSent = toBeSentImage.createGraphics();
-                        g2dToBeSent.drawImage(thisClientImage, scaledWidth.intValue(), 0, -scaledWidth.intValue(), finalHeight.intValue(), null);
-                        g2dToBeSent.dispose();
-
-                        scaledWidth = Double.valueOf(670);
-                        width = Double.valueOf(thisClientImage.getWidth());
-                        height = Double.valueOf(thisClientImage.getHeight());
-                        finalHeight = scaledWidth*(height/width);
-
-                        BufferedImage toBeShownImage = new BufferedImage(scaledWidth.intValue(),finalHeight.intValue(), BufferedImage.TYPE_INT_RGB);
-                        Graphics2D g2dToBeShown = toBeShownImage.createGraphics();
-                        g2dToBeShown.drawImage(thisClientImage, scaledWidth.intValue(), 0, -scaledWidth.intValue(), finalHeight.intValue(), null);
-                        g2dToBeShown.dispose();
-
-                        WritableImage wr;
-                        wr = new WritableImage(toBeShownImage.getWidth(), toBeShownImage.getHeight());
-                        PixelWriter pw = wr.getPixelWriter();
-                        for (int x = 0; x < toBeShownImage.getWidth(); x++) {
-                            for (int y = 0; y < toBeShownImage.getHeight(); y++) {
-                                pw.setArgb(x, y, toBeShownImage.getRGB(x, y));
+                        if(allowsCamera) {
+                            thisClientImage = webCam.getImage();
+                            if (thisClientImage == null) {
+                                File gifFile = new File("src/sample/giphy.gif");
+                                ArrayList<BufferedImage> bufferedImageArrayList = getFrames(gifFile);
+                                if (i == bufferedImageArrayList.size())
+                                    i = 0;
+                                thisClientImage = bufferedImageArrayList.get(i);
+                                i++;
                             }
+                            Double scaledWidth = Double.valueOf(320);
+                            Double width = Double.valueOf(thisClientImage.getWidth());
+                            Double height = Double.valueOf(thisClientImage.getHeight());
+                            Double finalHeight = scaledWidth * (height / width);
+
+                            toBeSentImage = new BufferedImage(scaledWidth.intValue(), finalHeight.intValue(), BufferedImage.TYPE_INT_RGB);
+                            Graphics2D g2dToBeSent = toBeSentImage.createGraphics();
+                            g2dToBeSent.drawImage(thisClientImage, scaledWidth.intValue(), 0, -scaledWidth.intValue(), finalHeight.intValue(), null);
+                            g2dToBeSent.dispose();
+
+                            scaledWidth = Double.valueOf(670);
+                            width = Double.valueOf(thisClientImage.getWidth());
+                            height = Double.valueOf(thisClientImage.getHeight());
+                            finalHeight = scaledWidth * (height / width);
+
+                            toBeShownImage = new BufferedImage(scaledWidth.intValue(), finalHeight.intValue(), BufferedImage.TYPE_INT_RGB);
+                            Graphics2D g2dToBeShown = toBeShownImage.createGraphics();
+                            g2dToBeShown.drawImage(thisClientImage, scaledWidth.intValue(), 0, -scaledWidth.intValue(), finalHeight.intValue(), null);
+                            g2dToBeShown.dispose();
+
+
+                            wr = new WritableImage(toBeShownImage.getWidth(), toBeShownImage.getHeight());
+                            PixelWriter pw = wr.getPixelWriter();
+                            for (int x = 0; x < toBeShownImage.getWidth(); x++) {
+                                for (int y = 0; y < toBeShownImage.getHeight(); y++) {
+                                    pw.setArgb(x, y, toBeShownImage.getRGB(x, y));
+                                }
+                            }
+
+                            finalClientImageViewToBeShown = new ImageView(wr);
+
+                            finalClientImageToBeShown = finalClientImageViewToBeShown.getImage();
+                            finalClientImageToBeSent = new ImageIcon(toBeSentImage);
+                        }
+                        else
+                        {
+                            wr = new WritableImage(670, 502);
+                            PixelWriter pw = wr.getPixelWriter();
+                            for (int x = 0; x < 670; x++) {
+                                for (int y = 0; y < 502; y++) {
+                                    pw.setArgb(x, y, new Color(0,0,0).getRGB());
+                                }
+                            }
+                            finalClientImageViewToBeShown = new ImageView(wr);
+                            finalClientImageToBeShown = finalClientImageViewToBeShown.getImage();
+                            finalClientImageToBeSent = new ImageIcon(toBeSentImage);
                         }
 
-                        ImageView finalClientImageViewToBeShown = new ImageView(wr);
-
-                        Image finalClientImageToBeShown = finalClientImageViewToBeShown.getImage();
-                        ImageIcon finalClientImageToBeSent = new ImageIcon(toBeSentImage);
-
+                        ImageIcon finalClientImageToBeSent1 = finalClientImageToBeSent;
                         Platform.runLater(() -> {
                             ObjectOutputStream dataToSendToServerStream;
                             try {
                                 dataToSendToServerStream = new ObjectOutputStream(socket.getOutputStream());
-                                dataToSendToServerStream.writeObject(finalClientImageToBeSent);
+                                dataToSendToServerStream.writeObject(finalClientImageToBeSent1);
                                 dataToSendToServerStream.flush();
                             } catch (IOException e) {
                                 try {
@@ -163,12 +187,14 @@ public class Controller implements Initializable {
                             }
                         }
 
-                        webCamRightPanes = new VBox();
+                        scrollVBoxPane = new VBox();
+                        Image finalClientImageToBeShown1 = finalClientImageToBeShown;
                         Platform.runLater(() -> {
-                            webCamRightPanes.getChildren().removeAll();
-                            webCamRightPanes.getChildren().addAll(imageViewReceivedArrayList);
-                            scrollPane.setContent(webCamRightPanes);
-                            thisClientImageView.setImage(finalClientImageToBeShown);
+                            scrollVBoxPane.getChildren().removeAll();
+                            scrollVBoxPane.getChildren().addAll(imageViewReceivedArrayList);
+                            scrollPane.setContent(scrollVBoxPane);
+                            scrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
+                            thisClientImageView.setImage(finalClientImageToBeShown1);
                         });
                     } catch (Exception e) {
                         socket.close();
@@ -189,5 +215,17 @@ public class Controller implements Initializable {
         for(int i = 0; i < ir.getNumImages(true); i++)
             frames.add(ir.read(i));
         return frames;
+    }
+
+    public void cameraOnOff(){
+        if(allowsCamera) {
+            allowsCamera = false;
+            webCam.close();
+        }
+        else {
+            allowsCamera = true;
+            if(!webCam.getLock().isLocked())
+                webCam.open();
+        }
     }
 }

@@ -15,7 +15,6 @@ public class Main extends Application {
         primaryStage.setScene(new Scene(root));
         primaryStage.setResizable(false);
         primaryStage.show();
-        System.out.println("STAGE HEIGHT = " + primaryStage.getHeight());
     }
 
     public static void main(String[] args) {
