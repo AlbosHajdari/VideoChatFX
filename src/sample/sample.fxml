@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<GridPane fx:id="root" maxHeight="512.0" maxWidth="1005.0" minHeight="497.0" minWidth="988.0" prefHeight="502.0" prefWidth="995.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+  <columnConstraints>
+    <ColumnConstraints hgrow="SOMETIMES" maxWidth="680.0" minWidth="680.0" prefWidth="680.0" />
+    <ColumnConstraints fillWidth="false" hgrow="SOMETIMES" maxWidth="325.0" minWidth="325.0" prefWidth="325.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints maxHeight="512.0" minHeight="512.0" prefHeight="512.0" vgrow="NEVER" />
+  </rowConstraints>
+   <children>
+      <ImageView fx:id="thisClientImageView" fitHeight="502.0" fitWidth="670.0" pickOnBounds="true" preserveRatio="true">
+         <GridPane.margin>
+            <Insets left="5.0" right="5.0" />
+         </GridPane.margin>
+      </ImageView>
+      <ScrollPane fx:id="scrollPane" hbarPolicy="NEVER" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" GridPane.columnIndex="1" />
+   </children>
+</GridPane>
