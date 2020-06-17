@@ -9,6 +9,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,18 +41,27 @@ public class Controller implements Initializable {
     private Webcam webCamera;
     private BufferedImage thisClientImage;
     private BufferedImage toBeShownImage = null;
+    private ArrayList<Boolean> changeToBlackImageBooleanArrayList = new ArrayList<>();
+    private int imageID;
+    private int oldNumber = 0;
+    private int newNumber = 0;
+    private ArrayList<ImageView> imageViewReceivedArrayList;
     @FXML
     private ImageView thisClientImageView;
     @FXML
     private VBox scrollVBoxPane;
     @FXML
     private ScrollPane scrollPane;
+    @FXML
+    private ScrollPane scrollPaneDyshi;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         //System.out.println("STAGE HEIGHT = " + root.getHeight());
     }
 
     public Controller() {
+
         try {
             socket = new Socket("127.0.0.1", 7800);
         } catch (IOException e) {
@@ -63,6 +73,7 @@ public class Controller implements Initializable {
             webCamera.open();
         }
         startCommunicatingWithServer();
+        addButtons();
     }
 
 
@@ -97,10 +108,14 @@ public class Controller implements Initializable {
                         Image finalClientImageToBeShown = tempClientImageToBeShown;
 
                         sendDataToServer(new ImageIcon(getScaledImage(Double.valueOf(320))));
-                        ArrayList<ImageView> imageViewReceivedArrayList = receiveDataFromServer();
 
-                        showData(finalClientImageToBeShown, imageViewReceivedArrayList);
-
+                        imageViewReceivedArrayList = receiveDataFromServer();
+                        oldNumber = imageViewReceivedArrayList.size();
+                        if(oldNumber != newNumber){
+                            addButtons();
+                            newNumber = oldNumber;
+                        }
+                        showData(finalClientImageToBeShown);
                     } catch (Exception e) {
                         socket.close();
                         e.printStackTrace();
@@ -111,21 +126,45 @@ public class Controller implements Initializable {
         Thread communicatingWithServerThread = new Thread(communicatingWithServerTask);
         communicatingWithServerThread.setDaemon(true);
         communicatingWithServerThread.start();
+
+
     }
 
-    private void showData(Image finalClientImageToBeShown, ArrayList<ImageView> imageViewReceivedArrayList) {
+    public void addButtons() {
+        VBox scrollVBOXpaneDYSHI = new VBox();
+        Platform.runLater(() -> {
+            for (int i = 0; i < oldNumber; i++) {
+                Button testButton = new Button("TEST BUTTON");
+                scrollVBOXpaneDYSHI.getChildren().add(testButton);
+                changeToBlackImageBooleanArrayList.add(false);
+                int imageIndex = i;
+                testButton.setOnAction(event -> {
+                    if (changeToBlackImageBooleanArrayList.get(imageIndex)){
+                        changeToBlackImageBooleanArrayList.set(imageIndex, false);
+                    }
+                    else {
+                        changeToBlackImageBooleanArrayList.set(imageIndex, true);
+                    }
+                });
+            }
+            scrollPaneDyshi.setContent(scrollVBOXpaneDYSHI);
+        });
+    }
+
+    private void showData(Image finalClientImageToBeShown) {
         scrollVBoxPane = new VBox();
         Platform.runLater(() -> {
             scrollVBoxPane.getChildren().removeAll();
-            scrollVBoxPane.getChildren().addAll(imageViewReceivedArrayList);
+            for(int j = 0; j<imageViewReceivedArrayList.size(); j++) {
+                scrollVBoxPane.getChildren().add(imageViewReceivedArrayList.get(j));
+            }
             scrollPane.setContent(scrollVBoxPane);
             scrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
             thisClientImageView.setImage(finalClientImageToBeShown);
         });
     }
-
     private ArrayList<ImageView> receiveDataFromServer() throws IOException, ClassNotFoundException {
-        ArrayList<ImageView> imageViewReceivedArrayList = new ArrayList<ImageView>();
+        imageViewReceivedArrayList = new ArrayList<ImageView>();
         AtomicReference<WritableImage> utilityImageConverter;
         ImageIcon receivedImageIcon;
         ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
@@ -151,6 +190,17 @@ public class Controller implements Initializable {
                 }
             }
         }
+        for(int i = 0; i<changeToBlackImageBooleanArrayList.size(); i++)
+            if(changeToBlackImageBooleanArrayList.get(i)){
+                WritableImage writableImage = new WritableImage(320, 240);
+                PixelWriter pw = writableImage.getPixelWriter();
+                for (int x = 0; x < 320; x++) {
+                    for (int y = 0; y < 240; y++) {
+                        pw.setArgb(x, y, new Color(0,0,0).getRGB());
+                    }
+                }
+                imageViewReceivedArrayList.get(i).setImage(writableImage);
+            }
         return imageViewReceivedArrayList;
     }
 

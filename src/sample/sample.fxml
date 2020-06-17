@@ -5,11 +5,11 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 
-
-<AnchorPane fx:id="root" maxHeight="550.0" maxWidth="995.0" minHeight="550.0" minWidth="995.0" prefHeight="550.0" prefWidth="995.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+<AnchorPane fx:id="root" maxHeight="550.0" maxWidth="1190.0" minHeight="550.0" minWidth="995.0" prefHeight="550.0" prefWidth="1190.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
    <children>
       <ImageView fx:id="thisClientImageView" fitHeight="502.0" fitWidth="670.0" layoutX="14.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
       <ScrollPane fx:id="scrollPane" cache="true" hbarPolicy="NEVER" layoutX="681.0" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="680.0" AnchorPane.topAnchor="5.0" />
       <Button fx:id="cameraOnOffButton" layoutX="163.0" layoutY="511.0" mnemonicParsing="false" onAction="#switchCameraOnOff" text="Button" AnchorPane.bottomAnchor="14.0" AnchorPane.topAnchor="511.0" />
+      <ScrollPane fx:id="scrollPaneDyshi" layoutX="1010.0" layoutY="14.0" prefHeight="530.0" prefWidth="171.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="1010.0" AnchorPane.topAnchor="5.0" />
    </children>
 </AnchorPane>
