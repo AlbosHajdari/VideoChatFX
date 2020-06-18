@@ -35,14 +35,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Controller implements Initializable {
     private int frameNumber = 0;
-    private HashMap<Integer, ImageIcon> portAndImageIcons = new HashMap<Integer, ImageIcon>();
     private Socket socket;
     private Boolean allowsCamera = true;
     private Webcam webCamera;
     private BufferedImage thisClientImage;
     private BufferedImage toBeShownImage = null;
     private ArrayList<Boolean> changeToBlackImageBooleanArrayList = new ArrayList<>();
-    private int imageID;
     private int oldNumber = 0;
     private int newNumber = 0;
     private ArrayList<ImageView> imageViewReceivedArrayList;
@@ -76,10 +74,6 @@ public class Controller implements Initializable {
         addButtons();
     }
 
-
-    public void stop() throws IOException {
-        socket.close();
-    }
     protected void startCommunicatingWithServer() {
         Task<Void> communicatingWithServerTask = new Task<Void>() {
             @Override
@@ -119,8 +113,10 @@ public class Controller implements Initializable {
                     } catch (Exception e) {
                         socket.close();
                         e.printStackTrace();
+                        break;
                     }
                 }
+                return null;
             }
         };
         Thread communicatingWithServerThread = new Thread(communicatingWithServerTask);
@@ -135,6 +131,7 @@ public class Controller implements Initializable {
         Platform.runLater(() -> {
             for (int i = 0; i < oldNumber; i++) {
                 Button testButton = new Button("TEST BUTTON");
+                scrollVBOXpaneDYSHI.setSpacing(240);
                 scrollVBOXpaneDYSHI.getChildren().add(testButton);
                 changeToBlackImageBooleanArrayList.add(false);
                 int imageIndex = i;
@@ -160,6 +157,7 @@ public class Controller implements Initializable {
             }
             scrollPane.setContent(scrollVBoxPane);
             scrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
+            scrollPaneDyshi.vvalueProperty().bindBidirectional(scrollPane.vvalueProperty());
             thisClientImageView.setImage(finalClientImageToBeShown);
         });
     }
@@ -170,7 +168,7 @@ public class Controller implements Initializable {
         ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
         ArrayList dataFromServerArrayList = (ArrayList) receivedDataStreamFromServer.readObject();
         Integer thisClientPort = (Integer) dataFromServerArrayList.get(0);
-        portAndImageIcons = (HashMap<Integer, ImageIcon>) dataFromServerArrayList.get(1);
+        HashMap<Integer, ImageIcon> portAndImageIcons = (HashMap<Integer, ImageIcon>) dataFromServerArrayList.get(1);
         Integer[] portNumbers = portAndImageIcons.keySet().toArray(new Integer[0]);
 
         for(int j=0; j<portNumbers.length; j++){
@@ -192,10 +190,12 @@ public class Controller implements Initializable {
         }
         for(int i = 0; i<changeToBlackImageBooleanArrayList.size(); i++)
             if(changeToBlackImageBooleanArrayList.get(i)){
-                WritableImage writableImage = new WritableImage(320, 240);
+                int width = (int) imageViewReceivedArrayList.get(i).getImage().getWidth();
+                int height = (int) imageViewReceivedArrayList.get(i).getImage().getHeight();
+                WritableImage writableImage = new WritableImage(width, height);
                 PixelWriter pw = writableImage.getPixelWriter();
-                for (int x = 0; x < 320; x++) {
-                    for (int y = 0; y < 240; y++) {
+                for (int x = 0; x < width; x++) {
+                    for (int y = 0; y < height; y++) {
                         pw.setArgb(x, y, new Color(0,0,0).getRGB());
                     }
                 }
