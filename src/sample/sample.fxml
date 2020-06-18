@@ -11,7 +11,7 @@
       <ImageView fx:id="thisClientImageView" fitHeight="502.0" fitWidth="674.0" layoutX="14.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
       <Button fx:id="cameraOnOffButton" layoutX="163.0" layoutY="511.0" mnemonicParsing="false" onAction="#switchCameraOnOff" text="Button" AnchorPane.bottomAnchor="14.0" AnchorPane.topAnchor="511.0" />
       <Rectangle arcHeight="5.0" arcWidth="5.0" height="542.0" layoutX="679.0" layoutY="4.0" stroke="BLACK" strokeType="INSIDE" width="487.0" />
-      <ScrollPane fx:id="scrollPaneDyshi" layoutX="994.0" layoutY="5.0" prefHeight="530.0" prefWidth="171.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="994.0" AnchorPane.topAnchor="5.0" />
-      <ScrollPane fx:id="scrollPane" cache="true" hbarPolicy="NEVER" layoutX="681.0" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="680.0" AnchorPane.topAnchor="5.0" />
+      <ScrollPane fx:id="buttonsOnOffScrollPane" layoutX="994.0" layoutY="5.0" prefHeight="530.0" prefWidth="171.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="994.0" AnchorPane.topAnchor="5.0" />
+      <ScrollPane fx:id="clientsImagesScrollPane" cache="true" hbarPolicy="NEVER" layoutX="681.0" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="680.0" AnchorPane.topAnchor="5.0" />
    </children>
 </AnchorPane>

@@ -47,17 +47,17 @@ public class Controller implements Initializable {
     private Webcam webCamera;
     private BufferedImage thisClientImage;
     private BufferedImage toBeShownImage = null;
-    private int newNumber = 0;
+    private int newNumberOfClients = 0;
     private ArrayList<ImageView> imageViewReceivedArrayList;
-    private HashMap<Integer, Boolean> oldPortAndShowOthersCameraHashMap;
+    private HashMap<Integer, Boolean> oldPortAndShowOthersImagesHashMap;
     @FXML
     private ImageView thisClientImageView;
     @FXML
-    private VBox scrollVBoxPane;
+    private VBox clientsImagesVBox;
     @FXML
-    private ScrollPane scrollPane;
+    private ScrollPane clientsImagesScrollPane;
     @FXML
-    private ScrollPane scrollPaneDyshi;
+    private ScrollPane buttonsOnOffScrollPane;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -65,7 +65,7 @@ public class Controller implements Initializable {
     }
 
     public Controller() {
-        oldPortAndShowOthersCameraHashMap = new HashMap<>();
+        oldPortAndShowOthersImagesHashMap = new HashMap<>();
         try {
             socket = new Socket("127.0.0.1", 7800);
         } catch (IOException e) {
@@ -154,33 +154,33 @@ public class Controller implements Initializable {
         ArrayList dataFromServerArrayList = (ArrayList) receivedDataStreamFromServer.readObject();
         Integer thisClientPort = (Integer) dataFromServerArrayList.get(0);
         HashMap<Integer, ImageIcon> portAndImageIcons = (HashMap<Integer, ImageIcon>) dataFromServerArrayList.get(1);
-        ArrayList<Integer> tempPortNumbers = new ArrayList<Integer>(portAndImageIcons.keySet());//.keySet();//.toArray(new Integer[0]);
-        tempPortNumbers.remove(tempPortNumbers.indexOf(thisClientPort.intValue()));
-        HashMap<Integer, Boolean> newPortAndShowOthersCameraHashMap = new HashMap<>();
-        for(int j=0; j<tempPortNumbers.size(); j++){
-            newPortAndShowOthersCameraHashMap.put(tempPortNumbers.get(j), oldPortAndShowOthersCameraHashMap.getOrDefault(tempPortNumbers.get(j), false));
-                receivedImageIcon = portAndImageIcons.get(tempPortNumbers.get(j));
-                if (receivedImageIcon != null) {
-                    BufferedImage bufferedImageReceived = new BufferedImage(receivedImageIcon.getIconWidth(), receivedImageIcon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
-                    Graphics g = bufferedImageReceived.createGraphics();
-                    receivedImageIcon.paintIcon(null, g, 0, 0);
-                    g.dispose();
+        ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndImageIcons.keySet());
+        portNumbers.remove(portNumbers.indexOf(thisClientPort.intValue()));
+        HashMap<Integer, Boolean> newPortAndShowOthersImagesHashMap = new HashMap<>();
+        for(int j=0; j<portNumbers.size(); j++){
+            newPortAndShowOthersImagesHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesHashMap.getOrDefault(portNumbers.get(j), false));
+            receivedImageIcon = portAndImageIcons.get(portNumbers.get(j));
+            if (receivedImageIcon != null) {
+                BufferedImage bufferedImageReceived = new BufferedImage(receivedImageIcon.getIconWidth(), receivedImageIcon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+                Graphics g = bufferedImageReceived.createGraphics();
+                receivedImageIcon.paintIcon(null, g, 0, 0);
+                g.dispose();
 
-                    utilityImageConverter = new AtomicReference<>();
-                    utilityImageConverter.set(SwingFXUtils.toFXImage(bufferedImageReceived, utilityImageConverter.get()));
+                utilityImageConverter = new AtomicReference<>();
+                utilityImageConverter.set(SwingFXUtils.toFXImage(bufferedImageReceived, utilityImageConverter.get()));
 
-                    ImageView imageViewReceived = new ImageView(utilityImageConverter.get());
-                    imageViewReceivedArrayList.add(imageViewReceived);
-                }
+                ImageView imageViewReceived = new ImageView(utilityImageConverter.get());
+                imageViewReceivedArrayList.add(imageViewReceived);
+            }
         }
-        oldPortAndShowOthersCameraHashMap = newPortAndShowOthersCameraHashMap;
-        int oldSize = imageViewReceivedArrayList.size();
-        if(oldSize != newNumber){
-            newNumber = oldSize;
-            addButtons(tempPortNumbers);
+        oldPortAndShowOthersImagesHashMap = newPortAndShowOthersImagesHashMap;
+        int oldNumberOfClients = imageViewReceivedArrayList.size();
+        if(oldNumberOfClients != newNumberOfClients){
+            newNumberOfClients = oldNumberOfClients;
+            addButtons(portNumbers);
         }
-        for(int i = 0; i<tempPortNumbers.size(); i++)
-                if(oldPortAndShowOthersCameraHashMap.get(tempPortNumbers.get(i))){
+        for(int i = 0; i<portNumbers.size(); i++)
+                if(oldPortAndShowOthersImagesHashMap.get(portNumbers.get(i))){
                     int width = (int) imageViewReceivedArrayList.get(i).getImage().getWidth();
                     int height = (int) imageViewReceivedArrayList.get(i).getImage().getHeight();
                     WritableImage writableImage = new WritableImage(width, height);
@@ -196,36 +196,36 @@ public class Controller implements Initializable {
     }
 
     private void showData(Image finalClientImageToBeShown) {
-        scrollVBoxPane = new VBox();
+        clientsImagesVBox = new VBox();
         Platform.runLater(() -> {
-            scrollVBoxPane.getChildren().removeAll();
+            clientsImagesVBox.getChildren().removeAll();
             for(int j = 0; j<imageViewReceivedArrayList.size(); j++) {
-                scrollVBoxPane.getChildren().add(imageViewReceivedArrayList.get(j));
+                clientsImagesVBox.getChildren().add(imageViewReceivedArrayList.get(j));
             }
-            scrollPane.setContent(scrollVBoxPane);
-            scrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
-            scrollPaneDyshi.vvalueProperty().bindBidirectional(scrollPane.vvalueProperty());
+            clientsImagesScrollPane.setContent(clientsImagesVBox);
+            clientsImagesScrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
+            buttonsOnOffScrollPane.vvalueProperty().bindBidirectional(clientsImagesScrollPane.vvalueProperty());
             thisClientImageView.setImage(finalClientImageToBeShown);
         });
     }
 
     public void addButtons(ArrayList<Integer> portNumbers) {
-        VBox scrollVBOXpaneDYSHI = new VBox();
+        VBox clientsButtonsVBox = new VBox();
         Platform.runLater(() -> {
             for (int i = 0; i < portNumbers.size(); i++) {
                     Button testButton = new Button("TEST BUTTON");
-                    scrollVBOXpaneDYSHI.setSpacing(240);
-                    scrollVBOXpaneDYSHI.getChildren().add(testButton);
+                    clientsButtonsVBox.setSpacing(240);
+                    clientsButtonsVBox.getChildren().add(testButton);
                     int imageIndex = i;
                     testButton.setOnAction(event -> {
-                        if (oldPortAndShowOthersCameraHashMap.get(portNumbers.get(imageIndex))) {
-                            oldPortAndShowOthersCameraHashMap.put(portNumbers.get(imageIndex), false);
+                        if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(imageIndex))) {
+                            oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), false);
                         } else {
-                            oldPortAndShowOthersCameraHashMap.put(portNumbers.get(imageIndex), true);
+                            oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), true);
                         }
                     });
             }
-            scrollPaneDyshi.setContent(scrollVBOXpaneDYSHI);
+            buttonsOnOffScrollPane.setContent(clientsButtonsVBox);
         });
     }
 
