@@ -41,9 +41,9 @@ public class Controller implements Initializable {
     private BufferedImage thisClientImage;
     private BufferedImage toBeShownImage = null;
     private ArrayList<Boolean> changeToBlackImageBooleanArrayList = new ArrayList<>();
-    private int oldNumber = 0;
     private int newNumber = 0;
     private ArrayList<ImageView> imageViewReceivedArrayList;
+    private HashMap<Integer, Boolean> oldPortAndShowOthersCameraHashMap;
     @FXML
     private ImageView thisClientImageView;
     @FXML
@@ -59,7 +59,7 @@ public class Controller implements Initializable {
     }
 
     public Controller() {
-
+        oldPortAndShowOthersCameraHashMap = new HashMap<>();
         try {
             socket = new Socket("127.0.0.1", 7800);
         } catch (IOException e) {
@@ -71,7 +71,7 @@ public class Controller implements Initializable {
             webCamera.open();
         }
         startCommunicatingWithServer();
-        addButtons();
+        //addButtons();
     }
 
     protected void startCommunicatingWithServer() {
@@ -104,11 +104,7 @@ public class Controller implements Initializable {
                         sendDataToServer(new ImageIcon(getScaledImage(Double.valueOf(320))));
 
                         imageViewReceivedArrayList = receiveDataFromServer();
-                        oldNumber = imageViewReceivedArrayList.size();
-                        if(oldNumber != newNumber){
-                            addButtons();
-                            newNumber = oldNumber;
-                        }
+
                         showData(finalClientImageToBeShown);
                     } catch (Exception e) {
                         socket.close();
@@ -126,41 +122,24 @@ public class Controller implements Initializable {
 
     }
 
-    public void addButtons() {
-        VBox scrollVBOXpaneDYSHI = new VBox();
+    private void sendDataToServer(ImageIcon finalClientImageToBeSent) {
         Platform.runLater(() -> {
-            for (int i = 0; i < oldNumber; i++) {
-                Button testButton = new Button("TEST BUTTON");
-                scrollVBOXpaneDYSHI.setSpacing(240);
-                scrollVBOXpaneDYSHI.getChildren().add(testButton);
-                changeToBlackImageBooleanArrayList.add(false);
-                int imageIndex = i;
-                testButton.setOnAction(event -> {
-                    if (changeToBlackImageBooleanArrayList.get(imageIndex)){
-                        changeToBlackImageBooleanArrayList.set(imageIndex, false);
-                    }
-                    else {
-                        changeToBlackImageBooleanArrayList.set(imageIndex, true);
-                    }
-                });
+            ObjectOutputStream dataToSendToServerStream;
+            try {
+                dataToSendToServerStream = new ObjectOutputStream(socket.getOutputStream());
+                dataToSendToServerStream.writeObject(finalClientImageToBeSent);
+                dataToSendToServerStream.flush();
+            } catch (IOException e) {
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                e.printStackTrace();
             }
-            scrollPaneDyshi.setContent(scrollVBOXpaneDYSHI);
         });
     }
 
-    private void showData(Image finalClientImageToBeShown) {
-        scrollVBoxPane = new VBox();
-        Platform.runLater(() -> {
-            scrollVBoxPane.getChildren().removeAll();
-            for(int j = 0; j<imageViewReceivedArrayList.size(); j++) {
-                scrollVBoxPane.getChildren().add(imageViewReceivedArrayList.get(j));
-            }
-            scrollPane.setContent(scrollVBoxPane);
-            scrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
-            scrollPaneDyshi.vvalueProperty().bindBidirectional(scrollPane.vvalueProperty());
-            thisClientImageView.setImage(finalClientImageToBeShown);
-        });
-    }
     private ArrayList<ImageView> receiveDataFromServer() throws IOException, ClassNotFoundException {
         imageViewReceivedArrayList = new ArrayList<ImageView>();
         AtomicReference<WritableImage> utilityImageConverter;
@@ -170,9 +149,16 @@ public class Controller implements Initializable {
         Integer thisClientPort = (Integer) dataFromServerArrayList.get(0);
         HashMap<Integer, ImageIcon> portAndImageIcons = (HashMap<Integer, ImageIcon>) dataFromServerArrayList.get(1);
         Integer[] portNumbers = portAndImageIcons.keySet().toArray(new Integer[0]);
-
+        HashMap<Integer, Boolean> newPortAndShowOthersCameraHashMap = new HashMap<>();
         for(int j=0; j<portNumbers.length; j++){
             if(portNumbers[j].intValue()!=thisClientPort.intValue()) {
+                if(oldPortAndShowOthersCameraHashMap.containsKey(portNumbers[j])){
+                    newPortAndShowOthersCameraHashMap.put(portNumbers[j], oldPortAndShowOthersCameraHashMap.get(portNumbers[j]));
+                }
+                else{
+                    newPortAndShowOthersCameraHashMap.put(portNumbers[j],false);
+                }
+                oldPortAndShowOthersCameraHashMap = newPortAndShowOthersCameraHashMap;
                 receivedImageIcon = portAndImageIcons.get(portNumbers[j]);
                 if (receivedImageIcon != null) {
                     BufferedImage bufferedImageReceived = new BufferedImage(receivedImageIcon.getIconWidth(), receivedImageIcon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
@@ -187,6 +173,11 @@ public class Controller implements Initializable {
                     imageViewReceivedArrayList.add(imageViewReceived);
                 }
             }
+        }
+        int oldSize = imageViewReceivedArrayList.size();
+        if(oldSize != newNumber){
+            newNumber = oldSize;
+            addButtons();
         }
         for(int i = 0; i<changeToBlackImageBooleanArrayList.size(); i++)
             if(changeToBlackImageBooleanArrayList.get(i)){
@@ -204,21 +195,39 @@ public class Controller implements Initializable {
         return imageViewReceivedArrayList;
     }
 
-    private void sendDataToServer(ImageIcon finalClientImageToBeSent) {
+    private void showData(Image finalClientImageToBeShown) {
+        scrollVBoxPane = new VBox();
         Platform.runLater(() -> {
-            ObjectOutputStream dataToSendToServerStream;
-            try {
-                dataToSendToServerStream = new ObjectOutputStream(socket.getOutputStream());
-                dataToSendToServerStream.writeObject(finalClientImageToBeSent);
-                dataToSendToServerStream.flush();
-            } catch (IOException e) {
-                try {
-                    socket.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-                e.printStackTrace();
+            scrollVBoxPane.getChildren().removeAll();
+            for(int j = 0; j<imageViewReceivedArrayList.size(); j++) {
+                scrollVBoxPane.getChildren().add(imageViewReceivedArrayList.get(j));
             }
+            scrollPane.setContent(scrollVBoxPane);
+            scrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
+            scrollPaneDyshi.vvalueProperty().bindBidirectional(scrollPane.vvalueProperty());
+            thisClientImageView.setImage(finalClientImageToBeShown);
+        });
+    }
+
+    public void addButtons() {
+        VBox scrollVBOXpaneDYSHI = new VBox();
+        Platform.runLater(() -> {
+            for (int i = 0; i < newNumber; i++) {
+                Button testButton = new Button("TEST BUTTON");
+                scrollVBOXpaneDYSHI.setSpacing(240);
+                scrollVBOXpaneDYSHI.getChildren().add(testButton);
+                changeToBlackImageBooleanArrayList.add(false);
+                int imageIndex = i;
+                testButton.setOnAction(event -> {
+                    if (changeToBlackImageBooleanArrayList.get(imageIndex)){
+                        changeToBlackImageBooleanArrayList.set(imageIndex, false);
+                    }
+                    else {
+                        changeToBlackImageBooleanArrayList.set(imageIndex, true);
+                    }
+                });
+            }
+            scrollPaneDyshi.setContent(scrollVBOXpaneDYSHI);
         });
     }
 
