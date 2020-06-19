@@ -6,10 +6,13 @@ import com.sun.imageio.plugins.gif.GIFImageReader;
 import com.sun.imageio.plugins.gif.GIFImageReaderSpi;
 
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -17,6 +20,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
 import javax.imageio.ImageIO;
@@ -177,7 +182,7 @@ public class Controller implements Initializable {
         int oldNumberOfClients = imageViewReceivedArrayList.size();
         if(oldNumberOfClients != newNumberOfClients){
             newNumberOfClients = oldNumberOfClients;
-            addButtons(portNumbers);
+            addButtons(portNumbers, imageViewReceivedArrayList);
         }
         for(int i = 0; i<portNumbers.size(); i++)
                 if(oldPortAndShowOthersImagesHashMap.get(portNumbers.get(i))){
@@ -197,6 +202,7 @@ public class Controller implements Initializable {
 
     private void showData(Image finalClientImageToBeShown) {
         clientsImagesVBox = new VBox();
+        clientsImagesVBox.setSpacing(5);
         Platform.runLater(() -> {
             clientsImagesVBox.getChildren().removeAll();
             for(int j = 0; j<imageViewReceivedArrayList.size(); j++) {
@@ -209,21 +215,27 @@ public class Controller implements Initializable {
         });
     }
 
-    public void addButtons(ArrayList<Integer> portNumbers) {
+    public void addButtons(ArrayList<Integer> portNumbers, ArrayList<ImageView> imageViewReceivedArrayList) {
         VBox clientsButtonsVBox = new VBox();
         Platform.runLater(() -> {
             for (int i = 0; i < portNumbers.size(); i++) {
-                    Button testButton = new Button("TEST BUTTON");
-                    clientsButtonsVBox.setSpacing(240);
-                    clientsButtonsVBox.getChildren().add(testButton);
-                    int imageIndex = i;
-                    testButton.setOnAction(event -> {
-                        if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(imageIndex))) {
-                            oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), false);
-                        } else {
-                            oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), true);
-                        }
-                    });
+                Button testButton = new Button("TEST BUTTON");
+                Button testButton2 = new Button("TEST BUTTON2");
+                testButton2.setLayoutY(25);
+                AnchorPane anchorPane = new AnchorPane();
+                anchorPane.getChildren().add(testButton);
+                anchorPane.getChildren().add(testButton2);
+                anchorPane.setMinHeight(imageViewReceivedArrayList.get(i).getImage().getHeight());
+                clientsButtonsVBox.getChildren().add(anchorPane);
+                clientsButtonsVBox.setSpacing(5);
+                int imageIndex = i;
+                testButton.setOnAction(event -> {
+                    if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(imageIndex))) {
+                        oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), false);
+                    } else {
+                        oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), true);
+                    }
+                });
             }
             buttonsOnOffScrollPane.setContent(clientsButtonsVBox);
         });
