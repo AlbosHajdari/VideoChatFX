@@ -6,13 +6,11 @@ import com.sun.imageio.plugins.gif.GIFImageReader;
 import com.sun.imageio.plugins.gif.GIFImageReaderSpi;
 
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -21,7 +19,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
 import javax.imageio.ImageIO;
@@ -32,10 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 import java.net.Socket;
 import java.net.URL;
@@ -49,12 +43,33 @@ public class Controller implements Initializable {
     private int frameNumber = 0;
     private Socket socket;
     private Boolean allowsCamera = true;
+    private Boolean allowsMicrophone = true;
     private Webcam webCamera;
     private BufferedImage thisClientImage;
     private BufferedImage toBeShownImage = null;
     private int newNumberOfClients = 0;
     private ArrayList<ImageView> imageViewReceivedArrayList;
     private HashMap<Integer, Boolean> oldPortAndShowOthersImagesHashMap;
+    private HashMap<Integer, Boolean> oldPortAndMuteOthersAudiosHashMap;
+    private File cameraOn30File = new File("images/cameraOn30.png");
+    private File cameraOff30File = new File("images/cameraOff30.png");
+    private File cameraOn50File = new File("images/cameraOn50.png");
+    private File cameraOff50File = new File("images/cameraOff50.png");
+
+    private Image imageFileCameraOn30 = new Image(cameraOn30File.toURI().toString());
+    private Image imageFileCameraOff30 = new Image(cameraOff30File.toURI().toString());
+    private Image imageFileCameraOn50 = new Image(cameraOn50File.toURI().toString());
+    private Image imageFileCameraOff50 = new Image(cameraOff50File.toURI().toString());
+
+    private File microphoneOn30File = new File("images/microphoneOn30.png");
+    private File microphoneOff30File = new File("images/microphoneOff30.png");
+    private File microphoneOn50File = new File("images/microphoneOn50.png");
+    private File microphoneOff50File = new File("images/microphoneOff50.png");
+
+    private Image imageFileMicrophoneOn30 = new Image(microphoneOn30File.toURI().toString());
+    private Image imageFileMicrophoneOff30 = new Image(microphoneOff30File.toURI().toString());
+    private Image imageFileMicrophoneOn50 = new Image(microphoneOn50File.toURI().toString());
+    private Image imageFileMicrophoneOff50 = new Image(microphoneOff50File.toURI().toString());
     @FXML
     private ImageView thisClientImageView;
     @FXML
@@ -63,13 +78,24 @@ public class Controller implements Initializable {
     private ScrollPane clientsImagesScrollPane;
     @FXML
     private ScrollPane buttonsOnOffScrollPane;
+    @FXML
+    private Button cameraOnOffButton = new Button("");
+    @FXML
+    private Button mifrophoneOnOffButton = new Button("");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        //System.out.println("STAGE HEIGHT = " + root.getHeight());
+        cameraOnOffButton.setPadding(new Insets(2,2,2,2));
+        Image imageFileCameraOn = new Image(cameraOn50File.toURI().toString());
+        cameraOnOffButton.setGraphic(new ImageView(imageFileCameraOn));
+
+        mifrophoneOnOffButton.setPadding(new Insets(2,2,2,2));
+        Image imageFileMicrophoneOn = new Image(microphoneOn50File.toURI().toString());
+        mifrophoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOn));
     }
 
     public Controller() {
+
         oldPortAndShowOthersImagesHashMap = new HashMap<>();
         try {
             socket = new Socket("127.0.0.1", 7800);
@@ -82,7 +108,6 @@ public class Controller implements Initializable {
             webCamera.open();
         }
         startCommunicatingWithServer();
-        //addButtons();
     }
 
     protected void startCommunicatingWithServer() {
@@ -160,7 +185,7 @@ public class Controller implements Initializable {
         Integer thisClientPort = (Integer) dataFromServerArrayList.get(0);
         HashMap<Integer, ImageIcon> portAndImageIcons = (HashMap<Integer, ImageIcon>) dataFromServerArrayList.get(1);
         ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndImageIcons.keySet());
-        portNumbers.remove(portNumbers.indexOf(thisClientPort.intValue()));
+        portNumbers.remove((Integer) thisClientPort.intValue());
         HashMap<Integer, Boolean> newPortAndShowOthersImagesHashMap = new HashMap<>();
         for(int j=0; j<portNumbers.size(); j++){
             newPortAndShowOthersImagesHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesHashMap.getOrDefault(portNumbers.get(j), false));
@@ -219,20 +244,35 @@ public class Controller implements Initializable {
         VBox clientsButtonsVBox = new VBox();
         Platform.runLater(() -> {
             for (int i = 0; i < portNumbers.size(); i++) {
-                Button testButton = new Button("TEST BUTTON");
-                Button testButton2 = new Button("TEST BUTTON2");
-                testButton2.setLayoutY(25);
+                Button switchOtherClientCameraButton = new Button("");
+                Button switchOtherClientMicrophoneButton = new Button("");
+
+                if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(i)))
+                    switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOff30));
+                else
+                    switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOn30));
+
+                /*if (oldPortAndMuteOthersAudiosHashMap.get(portNumbers.get(i)))
+                    switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileMicrophoneOff30));
+                else*/
+                    switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileMicrophoneOn30));
+
+                switchOtherClientCameraButton.setPadding(new Insets(2,2,2,2));
+                switchOtherClientMicrophoneButton.setPadding(new Insets(2,2,2,2));
+                switchOtherClientMicrophoneButton.setLayoutY(35);
                 AnchorPane anchorPane = new AnchorPane();
-                anchorPane.getChildren().add(testButton);
-                anchorPane.getChildren().add(testButton2);
+                anchorPane.getChildren().add(switchOtherClientCameraButton);
+                anchorPane.getChildren().add(switchOtherClientMicrophoneButton);
                 anchorPane.setMinHeight(imageViewReceivedArrayList.get(i).getImage().getHeight());
                 clientsButtonsVBox.getChildren().add(anchorPane);
                 clientsButtonsVBox.setSpacing(5);
                 int imageIndex = i;
-                testButton.setOnAction(event -> {
+                switchOtherClientCameraButton.setOnAction(event -> {
                     if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(imageIndex))) {
+                        switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOn30));
                         oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), false);
                     } else {
+                        switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOff30));
                         oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), true);
                     }
                 });
@@ -284,7 +324,7 @@ public class Controller implements Initializable {
     }
 
     private BufferedImage getGiphyImageFrame() throws IOException {
-        File gifFile = new File("src/sample/giphy.gif");
+        File gifFile = new File("images/noSignalGif.gif");
         ArrayList<BufferedImage> bufferedImageArrayList = getFrames(gifFile);
         if (frameNumber == bufferedImageArrayList.size())
             frameNumber = 0;
@@ -302,13 +342,28 @@ public class Controller implements Initializable {
 
     public void switchCameraOnOff(){
         if(allowsCamera) {
+            cameraOnOffButton.setGraphic(new ImageView(imageFileCameraOff50));
             allowsCamera = false;
             webCamera.close();
         }
         else {
+            cameraOnOffButton.setGraphic(new ImageView(imageFileCameraOn50));
             allowsCamera = true;
             if(!webCamera.getLock().isLocked())
                 webCamera.open();
+        }
+    }
+
+    public void switchMicrophoneOnOff(){
+        if(allowsMicrophone) {
+            mifrophoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOff50));
+            allowsMicrophone = false;
+            //turn microphone off
+        }
+        else {
+            mifrophoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOn50));
+            allowsMicrophone = true;
+            //turn microphone on
         }
     }
 }

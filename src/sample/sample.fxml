@@ -5,11 +5,12 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane fx:id="root" maxHeight="550.0" maxWidth="1190.0" minHeight="550.0" minWidth="995.0" prefHeight="550.0" prefWidth="1172.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+<AnchorPane fx:id="root" maxHeight="565.0" maxWidth="1190.0" minHeight="565.0" minWidth="995.0" prefHeight="565.0" prefWidth="1090.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
    <children>
       <ImageView fx:id="thisClientImageView" fitHeight="502.0" fitWidth="674.0" layoutX="14.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
-      <Button fx:id="cameraOnOffButton" layoutX="163.0" layoutY="511.0" mnemonicParsing="false" onAction="#switchCameraOnOff" text="Button" AnchorPane.bottomAnchor="14.0" AnchorPane.topAnchor="511.0" />
-      <ScrollPane fx:id="clientsImagesScrollPane" cache="true" hbarPolicy="NEVER" layoutX="681.0" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="680.0" AnchorPane.topAnchor="5.0" />
-      <ScrollPane fx:id="buttonsOnOffScrollPane" layoutX="994.0" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="994.0" AnchorPane.topAnchor="5.0" />
+      <Button fx:id="cameraOnOffButton" layoutX="281.0" layoutY="510.0" maxHeight="54.0" maxWidth="54.0" minHeight="54.0" minWidth="54.0" mnemonicParsing="false" onAction="#switchCameraOnOff" prefHeight="54.0" prefWidth="54.0" AnchorPane.topAnchor="514.0" />
+      <Button fx:id="mifrophoneOnOffButton" layoutX="354.0" layoutY="510.0" maxHeight="54.0" maxWidth="54.0" minHeight="54.0" minWidth="54.0" mnemonicParsing="false" onAction="#switchMicrophoneOnOff" prefHeight="54.0" prefWidth="54.0" AnchorPane.topAnchor="514.0" />
+      <ScrollPane fx:id="clientsImagesScrollPane" cache="true" hbarPolicy="NEVER" layoutX="681.0" maxHeight="502.0" maxWidth="320.0" minHeight="502.0" minWidth="320.0" prefHeight="502.0" prefWidth="320.0" style="-fx-background-color: transparent;" vbarPolicy="NEVER" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="683.0" AnchorPane.topAnchor="4.0" />
+      <ScrollPane fx:id="buttonsOnOffScrollPane" layoutX="994.0" maxHeight="564.0" maxWidth="320.0" minHeight="502.0" minWidth="171.0" prefHeight="564.0" prefWidth="171.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="1005.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="4.0" />
    </children>
 </AnchorPane>
