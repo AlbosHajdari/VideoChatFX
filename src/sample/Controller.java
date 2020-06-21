@@ -189,7 +189,7 @@ public class Controller implements Initializable {
         Integer thisClientPort = (Integer) receivedMainArrayListFromServer.get(0);
         LinkedHashMap<Integer, ArrayList> portAndUsernameAndImageIconsLinkedHashMap = (LinkedHashMap<Integer, ArrayList>) receivedMainArrayListFromServer.get(1);
         ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndUsernameAndImageIconsLinkedHashMap.keySet());
-        portNumbers.remove((Integer) thisClientPort.intValue());
+        portNumbers.remove(thisClientPort);
         LinkedHashMap<Integer, Boolean> newPortAndShowOthersImagesLinkedHashMap = new LinkedHashMap<>();
         for(int j=0; j<portNumbers.size(); j++){
             newPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesLinkedHashMap.getOrDefault(portNumbers.get(j), false));
