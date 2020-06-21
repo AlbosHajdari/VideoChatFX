@@ -20,6 +20,7 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -35,7 +36,7 @@ import java.net.Socket;
 import java.net.URL;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -48,9 +49,9 @@ public class Controller implements Initializable {
     private BufferedImage thisClientImage;
     private BufferedImage toBeShownImage = null;
     private int newNumberOfClients = 0;
-    private ArrayList<ImageView> imageViewReceivedArrayList;
-    private HashMap<Integer, Boolean> oldPortAndShowOthersImagesHashMap;
-    private HashMap<Integer, Boolean> oldPortAndMuteOthersAudiosHashMap;
+    private ArrayList<ArrayList> usernameAndImageViewReceivedArrayList;
+    private LinkedHashMap<Integer, Boolean> oldPortAndShowOthersImagesLinkedHashMap;
+    private LinkedHashMap<Integer, Boolean> oldPortAndMuteOthersAudiosLinkedHashMap;
     private File cameraOn30File = new File("images/cameraOn30.png");
     private File cameraOff30File = new File("images/cameraOff30.png");
     private File cameraOn50File = new File("images/cameraOn50.png");
@@ -70,6 +71,7 @@ public class Controller implements Initializable {
     private Image imageFileMicrophoneOff30 = new Image(microphoneOff30File.toURI().toString());
     private Image imageFileMicrophoneOn50 = new Image(microphoneOn50File.toURI().toString());
     private Image imageFileMicrophoneOff50 = new Image(microphoneOff50File.toURI().toString());
+    private String thisClientUsername;
     @FXML
     private ImageView thisClientImageView;
     @FXML
@@ -81,7 +83,7 @@ public class Controller implements Initializable {
     @FXML
     private Button cameraOnOffButton = new Button("");
     @FXML
-    private Button mifrophoneOnOffButton = new Button("");
+    private Button microphoneOnOffButton = new Button("");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -89,14 +91,14 @@ public class Controller implements Initializable {
         Image imageFileCameraOn = new Image(cameraOn50File.toURI().toString());
         cameraOnOffButton.setGraphic(new ImageView(imageFileCameraOn));
 
-        mifrophoneOnOffButton.setPadding(new Insets(2,2,2,2));
+        microphoneOnOffButton.setPadding(new Insets(2,2,2,2));
         Image imageFileMicrophoneOn = new Image(microphoneOn50File.toURI().toString());
-        mifrophoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOn));
+        microphoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOn));
     }
 
     public Controller() {
-
-        oldPortAndShowOthersImagesHashMap = new HashMap<>();
+        thisClientUsername = "Test Username2";
+        oldPortAndShowOthersImagesLinkedHashMap = new LinkedHashMap<>();
         try {
             socket = new Socket("127.0.0.1", 7800);
         } catch (IOException e) {
@@ -139,7 +141,7 @@ public class Controller implements Initializable {
 
                         sendDataToServer(new ImageIcon(getScaledImage(Double.valueOf(320))));
 
-                        imageViewReceivedArrayList = receiveDataFromServer();
+                        usernameAndImageViewReceivedArrayList = receiveDataFromServer();
 
                         showData(finalClientImageToBeShown);
                     } catch (Exception e) {
@@ -154,8 +156,6 @@ public class Controller implements Initializable {
         Thread communicatingWithServerThread = new Thread(communicatingWithServerTask);
         communicatingWithServerThread.setDaemon(true);
         communicatingWithServerThread.start();
-
-
     }
 
     private void sendDataToServer(ImageIcon finalClientImageToBeSent) {
@@ -163,7 +163,10 @@ public class Controller implements Initializable {
             ObjectOutputStream dataToSendToServerStream;
             try {
                 dataToSendToServerStream = new ObjectOutputStream(socket.getOutputStream());
-                dataToSendToServerStream.writeObject(finalClientImageToBeSent);
+                ArrayList dataToSendToServerArrayList = new ArrayList();
+                dataToSendToServerArrayList.add(thisClientUsername);
+                dataToSendToServerArrayList.add(finalClientImageToBeSent);
+                dataToSendToServerStream.writeObject(dataToSendToServerArrayList);
                 dataToSendToServerStream.flush();
             } catch (IOException e) {
                 try {
@@ -176,21 +179,23 @@ public class Controller implements Initializable {
         });
     }
 
-    private ArrayList<ImageView> receiveDataFromServer() throws IOException, ClassNotFoundException {
-        imageViewReceivedArrayList = new ArrayList<ImageView>();
+    private ArrayList<ArrayList> receiveDataFromServer() throws IOException, ClassNotFoundException {
+        usernameAndImageViewReceivedArrayList = new ArrayList<ArrayList>();
         AtomicReference<WritableImage> utilityImageConverter;
         ImageIcon receivedImageIcon;
+        String receivedUsername;
         ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
-        ArrayList dataFromServerArrayList = (ArrayList) receivedDataStreamFromServer.readObject();
-        Integer thisClientPort = (Integer) dataFromServerArrayList.get(0);
-        HashMap<Integer, ImageIcon> portAndImageIcons = (HashMap<Integer, ImageIcon>) dataFromServerArrayList.get(1);
-        ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndImageIcons.keySet());
+        ArrayList receivedMainArrayListFromServer = (ArrayList) receivedDataStreamFromServer.readObject();
+        Integer thisClientPort = (Integer) receivedMainArrayListFromServer.get(0);
+        LinkedHashMap<Integer, ArrayList> portAndUsernameAndImageIconsLinkedHashMap = (LinkedHashMap<Integer, ArrayList>) receivedMainArrayListFromServer.get(1);
+        ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndUsernameAndImageIconsLinkedHashMap.keySet());
         portNumbers.remove((Integer) thisClientPort.intValue());
-        HashMap<Integer, Boolean> newPortAndShowOthersImagesHashMap = new HashMap<>();
+        LinkedHashMap<Integer, Boolean> newPortAndShowOthersImagesLinkedHashMap = new LinkedHashMap<>();
         for(int j=0; j<portNumbers.size(); j++){
-            newPortAndShowOthersImagesHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesHashMap.getOrDefault(portNumbers.get(j), false));
-            receivedImageIcon = portAndImageIcons.get(portNumbers.get(j));
-            if (receivedImageIcon != null) {
+            newPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesLinkedHashMap.getOrDefault(portNumbers.get(j), false));
+            receivedUsername = (String) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(0);
+            receivedImageIcon = (ImageIcon) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(1);
+            if (receivedImageIcon != null && receivedUsername!=null) {
                 BufferedImage bufferedImageReceived = new BufferedImage(receivedImageIcon.getIconWidth(), receivedImageIcon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
                 Graphics g = bufferedImageReceived.createGraphics();
                 receivedImageIcon.paintIcon(null, g, 0, 0);
@@ -200,19 +205,24 @@ public class Controller implements Initializable {
                 utilityImageConverter.set(SwingFXUtils.toFXImage(bufferedImageReceived, utilityImageConverter.get()));
 
                 ImageView imageViewReceived = new ImageView(utilityImageConverter.get());
-                imageViewReceivedArrayList.add(imageViewReceived);
+                Text usernameTextReceived = new Text(receivedUsername);
+                ArrayList tempArrayList = new ArrayList();
+                tempArrayList.add(usernameTextReceived);
+                tempArrayList.add(imageViewReceived);
+                usernameAndImageViewReceivedArrayList.add(tempArrayList);
             }
         }
-        oldPortAndShowOthersImagesHashMap = newPortAndShowOthersImagesHashMap;
-        int oldNumberOfClients = imageViewReceivedArrayList.size();
+        oldPortAndShowOthersImagesLinkedHashMap = newPortAndShowOthersImagesLinkedHashMap;
+        int oldNumberOfClients = usernameAndImageViewReceivedArrayList.size();
         if(oldNumberOfClients != newNumberOfClients){
             newNumberOfClients = oldNumberOfClients;
-            addButtons(portNumbers, imageViewReceivedArrayList);
+            addButtons(portNumbers, usernameAndImageViewReceivedArrayList);
         }
         for(int i = 0; i<portNumbers.size(); i++)
-                if(oldPortAndShowOthersImagesHashMap.get(portNumbers.get(i))){
-                    int width = (int) imageViewReceivedArrayList.get(i).getImage().getWidth();
-                    int height = (int) imageViewReceivedArrayList.get(i).getImage().getHeight();
+                if(oldPortAndShowOthersImagesLinkedHashMap.get(portNumbers.get(i))){
+                    ImageView tempImageView = (ImageView) usernameAndImageViewReceivedArrayList.get(i).get(1);
+                    int width = (int) tempImageView.getImage().getWidth();
+                    int height = (int) tempImageView.getImage().getHeight();
                     WritableImage writableImage = new WritableImage(width, height);
                     PixelWriter pw = writableImage.getPixelWriter();
                     for (int x = 0; x < width; x++) {
@@ -220,18 +230,31 @@ public class Controller implements Initializable {
                             pw.setArgb(x, y, new Color(0,0,0).getRGB());
                         }
                     }
-                    imageViewReceivedArrayList.get(i).setImage(writableImage);
+                    tempImageView.setImage(writableImage);
+                    usernameAndImageViewReceivedArrayList.get(i).remove(1);
+                    usernameAndImageViewReceivedArrayList.get(i).add(tempImageView);
                 }
-        return imageViewReceivedArrayList;
+        return usernameAndImageViewReceivedArrayList;
     }
 
     private void showData(Image finalClientImageToBeShown) {
         clientsImagesVBox = new VBox();
-        clientsImagesVBox.setSpacing(5);
+        clientsImagesVBox.setSpacing(2);
         Platform.runLater(() -> {
-            clientsImagesVBox.getChildren().removeAll();
-            for(int j = 0; j<imageViewReceivedArrayList.size(); j++) {
-                clientsImagesVBox.getChildren().add(imageViewReceivedArrayList.get(j));
+            for(int j = 0; j< usernameAndImageViewReceivedArrayList.size(); j++) {
+                AnchorPane anchorPane = new AnchorPane();
+
+                Text tempUserNameText = (Text) usernameAndImageViewReceivedArrayList.get(j).get(0);
+                tempUserNameText.setText(tempUserNameText.getText()+":");
+                ImageView tempClientImageView = (ImageView) usernameAndImageViewReceivedArrayList.get(j).get(1);
+                tempUserNameText.setLayoutY(15);
+                tempUserNameText.setLayoutX(5);
+                tempClientImageView.setLayoutY(20);
+
+                anchorPane.getChildren().add(tempUserNameText);
+                anchorPane.getChildren().add(tempClientImageView);
+                if(j>0) anchorPane.setStyle("-fx-border-style: solid none none none;");
+                clientsImagesVBox.getChildren().add(anchorPane);
             }
             clientsImagesScrollPane.setContent(clientsImagesVBox);
             clientsImagesScrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
@@ -240,40 +263,43 @@ public class Controller implements Initializable {
         });
     }
 
-    public void addButtons(ArrayList<Integer> portNumbers, ArrayList<ImageView> imageViewReceivedArrayList) {
+    public void addButtons(ArrayList<Integer> portNumbers, ArrayList<ArrayList> usernameAndImageViewReceivedArrayList) {
         VBox clientsButtonsVBox = new VBox();
+        clientsButtonsVBox.setSpacing(2);
         Platform.runLater(() -> {
             for (int i = 0; i < portNumbers.size(); i++) {
                 Button switchOtherClientCameraButton = new Button("");
                 Button switchOtherClientMicrophoneButton = new Button("");
 
-                if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(i)))
+                if (oldPortAndShowOthersImagesLinkedHashMap.get(portNumbers.get(i)))
                     switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOff30));
                 else
                     switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOn30));
 
-                /*if (oldPortAndMuteOthersAudiosHashMap.get(portNumbers.get(i)))
+                /*if (oldPortAndMuteOthersAudiosLinkedHashMap.get(portNumbers.get(i)))
                     switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileMicrophoneOff30));
                 else*/
                     switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileMicrophoneOn30));
 
                 switchOtherClientCameraButton.setPadding(new Insets(2,2,2,2));
                 switchOtherClientMicrophoneButton.setPadding(new Insets(2,2,2,2));
-                switchOtherClientMicrophoneButton.setLayoutY(35);
+                switchOtherClientCameraButton.setLayoutY(20);
+                switchOtherClientMicrophoneButton.setLayoutY(58);
                 AnchorPane anchorPane = new AnchorPane();
                 anchorPane.getChildren().add(switchOtherClientCameraButton);
                 anchorPane.getChildren().add(switchOtherClientMicrophoneButton);
-                anchorPane.setMinHeight(imageViewReceivedArrayList.get(i).getImage().getHeight());
+                if(i==0) anchorPane.setMinHeight(((ImageView)usernameAndImageViewReceivedArrayList.get(i).get(1)).getImage().getHeight() + 20);
+                else
+                    anchorPane.setMinHeight(((ImageView)usernameAndImageViewReceivedArrayList.get(i).get(1)).getImage().getHeight() + 22);
                 clientsButtonsVBox.getChildren().add(anchorPane);
-                clientsButtonsVBox.setSpacing(5);
                 int imageIndex = i;
                 switchOtherClientCameraButton.setOnAction(event -> {
-                    if (oldPortAndShowOthersImagesHashMap.get(portNumbers.get(imageIndex))) {
+                    if (oldPortAndShowOthersImagesLinkedHashMap.get(portNumbers.get(imageIndex))) {
                         switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOn30));
-                        oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), false);
+                        oldPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(imageIndex), false);
                     } else {
                         switchOtherClientCameraButton.setGraphic(new ImageView(imageFileCameraOff30));
-                        oldPortAndShowOthersImagesHashMap.put(portNumbers.get(imageIndex), true);
+                        oldPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(imageIndex), true);
                     }
                 });
             }
@@ -356,12 +382,12 @@ public class Controller implements Initializable {
 
     public void switchMicrophoneOnOff(){
         if(allowsMicrophone) {
-            mifrophoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOff50));
+            microphoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOff50));
             allowsMicrophone = false;
             //turn microphone off
         }
         else {
-            mifrophoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOn50));
+            microphoneOnOffButton.setGraphic(new ImageView(imageFileMicrophoneOn50));
             allowsMicrophone = true;
             //turn microphone on
         }

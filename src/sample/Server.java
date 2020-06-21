@@ -5,20 +5,20 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.stage.Stage;
 
-import javax.swing.*;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
 import java.net.ServerSocket;
 import java.net.Socket;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Server extends Application {
     private Socket socket;
     private ServerSocket serverSocket;
-    private HashMap<Integer, ImageIcon> portAndImageIcons = new HashMap<Integer, ImageIcon>();
+    private LinkedHashMap<Integer, ArrayList> portAndUsernamesImageIconsLinkedHashMap = new LinkedHashMap<Integer, ArrayList>();
 
     public static void main(String[] args) {
         launch(args);
@@ -32,6 +32,10 @@ public class Server extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    @Override
+    public void stop(){
+        //
     }
 
     protected void startConnection() {
@@ -56,21 +60,20 @@ public class Server extends Application {
                 while (true) {
                     try {
                         ObjectInputStream receivedDataStreamFromClient = new ObjectInputStream(clientSocket.getInputStream());
-                        ImageIcon receivedImageIcon;
-                        receivedImageIcon = (ImageIcon) receivedDataStreamFromClient.readObject();
-                        portAndImageIcons.put(clientSocket.getPort(), receivedImageIcon);
+                        ArrayList receivedUsernameImageIconFromClientArrayList = (ArrayList) receivedDataStreamFromClient.readObject();
+                        portAndUsernamesImageIconsLinkedHashMap.put(clientSocket.getPort(), receivedUsernameImageIconFromClientArrayList);
 
-                        ArrayList dataToBeSentArrayList = new ArrayList();
-                        dataToBeSentArrayList.add(clientSocket.getPort());
-                        dataToBeSentArrayList.add(portAndImageIcons);
+                        ArrayList dataToSendToClientArrayList = new ArrayList();
+                        dataToSendToClientArrayList.add(clientSocket.getPort());
+                        dataToSendToClientArrayList.add(portAndUsernamesImageIconsLinkedHashMap);
                         Platform.runLater(() -> {
                             try {
                                 ObjectOutputStream dataToSendToClientStream;
                                 dataToSendToClientStream = new ObjectOutputStream(clientSocket.getOutputStream());
-                                dataToSendToClientStream.writeObject(dataToBeSentArrayList);
+                                dataToSendToClientStream.writeObject(dataToSendToClientArrayList);
                                 dataToSendToClientStream.flush();
                             } catch (IOException e) {
-                                portAndImageIcons.remove(clientSocket.getPort());
+                                portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
                                 try {
                                     clientSocket.close();
                                 } catch (IOException ex) {
@@ -80,7 +83,7 @@ public class Server extends Application {
                             }
                         });
                     } catch (Exception e) {
-                        portAndImageIcons.remove(clientSocket.getPort());
+                        portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
                         clientSocket.close();
                         e.printStackTrace();
                         break;
