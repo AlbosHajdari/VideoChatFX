@@ -62,13 +62,13 @@ public class Controller implements Initializable {
     private Image imageFileCameraOn50 = new Image(cameraOn50File.toURI().toString());
     private Image imageFileCameraOff50 = new Image(cameraOff50File.toURI().toString());
 
-    private File microphoneOn30File = new File("images/microphoneOn30.png");
-    private File microphoneOff30File = new File("images/microphoneOff30.png");
+    private File unMute30File = new File("images/unMute30.png");
+    private File mute30File = new File("images/mute30.png");
     private File microphoneOn50File = new File("images/microphoneOn50.png");
     private File microphoneOff50File = new File("images/microphoneOff50.png");
 
-    private Image imageFileMicrophoneOn30 = new Image(microphoneOn30File.toURI().toString());
-    private Image imageFileMicrophoneOff30 = new Image(microphoneOff30File.toURI().toString());
+    private Image imageFileUnMute30 = new Image(unMute30File.toURI().toString());
+    private Image imageFileMute30 = new Image(mute30File.toURI().toString());
     private Image imageFileMicrophoneOn50 = new Image(microphoneOn50File.toURI().toString());
     private Image imageFileMicrophoneOff50 = new Image(microphoneOff50File.toURI().toString());
     private String thisClientUsername;
@@ -279,7 +279,7 @@ public class Controller implements Initializable {
                 /*if (oldPortAndMuteOthersAudiosLinkedHashMap.get(portNumbers.get(i)))
                     switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileMicrophoneOff30));
                 else*/
-                    switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileMicrophoneOn30));
+                    switchOtherClientMicrophoneButton.setGraphic(new ImageView(imageFileUnMute30));
 
                 switchOtherClientCameraButton.setPadding(new Insets(2,2,2,2));
                 switchOtherClientMicrophoneButton.setPadding(new Insets(2,2,2,2));
