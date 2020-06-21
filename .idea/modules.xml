@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/VideoChatFX2.iml" filepath="$PROJECT_DIR$/VideoChatFX2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/VideoChatFX.iml" filepath="$PROJECT_DIR$/VideoChatFX.iml" />
     </modules>
   </component>
 </project>

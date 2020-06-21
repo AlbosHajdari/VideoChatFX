@@ -179,47 +179,48 @@ public class Controller implements Initializable {
         });
     }
 
-    private ArrayList<ArrayList> receiveDataFromServer() throws IOException, ClassNotFoundException {
+    private ArrayList<ArrayList> receiveDataFromServer() throws IOException {
         usernameAndImageViewReceivedArrayList = new ArrayList<ArrayList>();
-        AtomicReference<WritableImage> utilityImageConverter;
-        ImageIcon receivedImageIcon;
-        String receivedUsername;
-        ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
-        ArrayList receivedMainArrayListFromServer = (ArrayList) receivedDataStreamFromServer.readObject();
-        Integer thisClientPort = (Integer) receivedMainArrayListFromServer.get(0);
-        LinkedHashMap<Integer, ArrayList> portAndUsernameAndImageIconsLinkedHashMap = (LinkedHashMap<Integer, ArrayList>) receivedMainArrayListFromServer.get(1);
-        ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndUsernameAndImageIconsLinkedHashMap.keySet());
-        portNumbers.remove(thisClientPort);
-        LinkedHashMap<Integer, Boolean> newPortAndShowOthersImagesLinkedHashMap = new LinkedHashMap<>();
-        for(int j=0; j<portNumbers.size(); j++){
-            newPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesLinkedHashMap.getOrDefault(portNumbers.get(j), false));
-            receivedUsername = (String) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(0);
-            receivedImageIcon = (ImageIcon) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(1);
-            if (receivedImageIcon != null && receivedUsername!=null) {
-                BufferedImage bufferedImageReceived = new BufferedImage(receivedImageIcon.getIconWidth(), receivedImageIcon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
-                Graphics g = bufferedImageReceived.createGraphics();
-                receivedImageIcon.paintIcon(null, g, 0, 0);
-                g.dispose();
+        try {
+            AtomicReference<WritableImage> utilityImageConverter;
+            ImageIcon receivedImageIcon;
+            String receivedUsername;
+            ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
+            ArrayList receivedMainArrayListFromServer = (ArrayList) receivedDataStreamFromServer.readObject();
+            Integer thisClientPort = (Integer) receivedMainArrayListFromServer.get(0);
+            LinkedHashMap<Integer, ArrayList> portAndUsernameAndImageIconsLinkedHashMap = (LinkedHashMap<Integer, ArrayList>) receivedMainArrayListFromServer.get(1);
+            ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndUsernameAndImageIconsLinkedHashMap.keySet());
+            portNumbers.remove(thisClientPort);
+            LinkedHashMap<Integer, Boolean> newPortAndShowOthersImagesLinkedHashMap = new LinkedHashMap<>();
+            for (int j = 0; j < portNumbers.size(); j++) {
+                newPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesLinkedHashMap.getOrDefault(portNumbers.get(j), false));
+                receivedUsername = (String) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(0);
+                receivedImageIcon = (ImageIcon) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(1);
+                if (receivedImageIcon != null && receivedUsername != null) {
+                    BufferedImage bufferedImageReceived = new BufferedImage(receivedImageIcon.getIconWidth(), receivedImageIcon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+                    Graphics g = bufferedImageReceived.createGraphics();
+                    receivedImageIcon.paintIcon(null, g, 0, 0);
+                    g.dispose();
 
-                utilityImageConverter = new AtomicReference<>();
-                utilityImageConverter.set(SwingFXUtils.toFXImage(bufferedImageReceived, utilityImageConverter.get()));
+                    utilityImageConverter = new AtomicReference<>();
+                    utilityImageConverter.set(SwingFXUtils.toFXImage(bufferedImageReceived, utilityImageConverter.get()));
 
-                ImageView imageViewReceived = new ImageView(utilityImageConverter.get());
-                Text usernameTextReceived = new Text(receivedUsername);
-                ArrayList tempArrayList = new ArrayList();
-                tempArrayList.add(usernameTextReceived);
-                tempArrayList.add(imageViewReceived);
-                usernameAndImageViewReceivedArrayList.add(tempArrayList);
+                    ImageView imageViewReceived = new ImageView(utilityImageConverter.get());
+                    Text usernameTextReceived = new Text(receivedUsername);
+                    ArrayList tempArrayList = new ArrayList();
+                    tempArrayList.add(usernameTextReceived);
+                    tempArrayList.add(imageViewReceived);
+                    usernameAndImageViewReceivedArrayList.add(tempArrayList);
+                }
             }
-        }
-        oldPortAndShowOthersImagesLinkedHashMap = newPortAndShowOthersImagesLinkedHashMap;
-        int oldNumberOfClients = usernameAndImageViewReceivedArrayList.size();
-        if(oldNumberOfClients != newNumberOfClients){
-            newNumberOfClients = oldNumberOfClients;
-            addButtons(portNumbers, usernameAndImageViewReceivedArrayList);
-        }
-        for(int i = 0; i<portNumbers.size(); i++)
-                if(oldPortAndShowOthersImagesLinkedHashMap.get(portNumbers.get(i))){
+            oldPortAndShowOthersImagesLinkedHashMap = newPortAndShowOthersImagesLinkedHashMap;
+            int oldNumberOfClients = usernameAndImageViewReceivedArrayList.size();
+            if (oldNumberOfClients != newNumberOfClients) {
+                newNumberOfClients = oldNumberOfClients;
+                addButtons(portNumbers, usernameAndImageViewReceivedArrayList);
+            }
+            for (int i = 0; i < portNumbers.size(); i++)
+                if (oldPortAndShowOthersImagesLinkedHashMap.get(portNumbers.get(i))) {
                     ImageView tempImageView = (ImageView) usernameAndImageViewReceivedArrayList.get(i).get(1);
                     int width = (int) tempImageView.getImage().getWidth();
                     int height = (int) tempImageView.getImage().getHeight();
@@ -227,13 +228,19 @@ public class Controller implements Initializable {
                     PixelWriter pw = writableImage.getPixelWriter();
                     for (int x = 0; x < width; x++) {
                         for (int y = 0; y < height; y++) {
-                            pw.setArgb(x, y, new Color(0,0,0).getRGB());
+                            pw.setArgb(x, y, new Color(0, 0, 0).getRGB());
                         }
                     }
                     tempImageView.setImage(writableImage);
                     usernameAndImageViewReceivedArrayList.get(i).remove(1);
                     usernameAndImageViewReceivedArrayList.get(i).add(tempImageView);
                 }
+        } catch (IOException e) {
+            socket.close();
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         return usernameAndImageViewReceivedArrayList;
     }
 
