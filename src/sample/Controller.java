@@ -186,7 +186,9 @@ public class Controller implements Initializable {
             ImageIcon receivedImageIcon;
             String receivedUsername;
             ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
+            System.out.println("1sh" + receivedDataStreamFromServer);
             ArrayList receivedMainArrayListFromServer = (ArrayList) receivedDataStreamFromServer.readObject();
+            System.out.println("2sh" + receivedMainArrayListFromServer);
             Integer thisClientPort = (Integer) receivedMainArrayListFromServer.get(0);
             LinkedHashMap<Integer, ArrayList> portAndUsernameAndImageIconsLinkedHashMap = (LinkedHashMap<Integer, ArrayList>) receivedMainArrayListFromServer.get(1);
             ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndUsernameAndImageIconsLinkedHashMap.keySet());
@@ -245,29 +247,33 @@ public class Controller implements Initializable {
     }
 
     private void showData(Image finalClientImageToBeShown) {
-        clientsImagesVBox = new VBox();
-        clientsImagesVBox.setSpacing(2);
-        Platform.runLater(() -> {
-            for(int j = 0; j< usernameAndImageViewReceivedArrayList.size(); j++) {
-                AnchorPane anchorPane = new AnchorPane();
+        try {
+            clientsImagesVBox = new VBox();
+            clientsImagesVBox.setSpacing(2);
+            Platform.runLater(() -> {
+                for (int j = 0; j < usernameAndImageViewReceivedArrayList.size(); j++) {
+                    AnchorPane anchorPane = new AnchorPane();
 
-                Text tempUserNameText = (Text) usernameAndImageViewReceivedArrayList.get(j).get(0);
-                tempUserNameText.setText(tempUserNameText.getText()+":");
-                ImageView tempClientImageView = (ImageView) usernameAndImageViewReceivedArrayList.get(j).get(1);
-                tempUserNameText.setLayoutY(15);
-                tempUserNameText.setLayoutX(5);
-                tempClientImageView.setLayoutY(20);
+                    Text tempUserNameText = (Text) usernameAndImageViewReceivedArrayList.get(j).get(0);
+                    tempUserNameText.setText(tempUserNameText.getText() + ":");
+                    ImageView tempClientImageView = (ImageView) usernameAndImageViewReceivedArrayList.get(j).get(1);
+                    tempUserNameText.setLayoutY(15);
+                    tempUserNameText.setLayoutX(5);
+                    tempClientImageView.setLayoutY(20);
 
-                anchorPane.getChildren().add(tempUserNameText);
-                anchorPane.getChildren().add(tempClientImageView);
-                if(j>0) anchorPane.setStyle("-fx-border-style: solid none none none;");
-                clientsImagesVBox.getChildren().add(anchorPane);
-            }
-            clientsImagesScrollPane.setContent(clientsImagesVBox);
-            clientsImagesScrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
-            buttonsOnOffScrollPane.vvalueProperty().bindBidirectional(clientsImagesScrollPane.vvalueProperty());
-            thisClientImageView.setImage(finalClientImageToBeShown);
-        });
+                    anchorPane.getChildren().add(tempUserNameText);
+                    anchorPane.getChildren().add(tempClientImageView);
+                    if (j > 0) anchorPane.setStyle("-fx-border-style: solid none none none;");
+                    clientsImagesVBox.getChildren().add(anchorPane);
+                }
+                clientsImagesScrollPane.setContent(clientsImagesVBox);
+                clientsImagesScrollPane.snapshot(new SnapshotParameters(), new WritableImage(1, 1)); //refreshes scrollPane
+                buttonsOnOffScrollPane.vvalueProperty().bindBidirectional(clientsImagesScrollPane.vvalueProperty());
+                thisClientImageView.setImage(finalClientImageToBeShown);
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void addButtons(ArrayList<Integer> portNumbers, ArrayList<ArrayList> usernameAndImageViewReceivedArrayList) {

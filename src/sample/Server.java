@@ -43,9 +43,17 @@ public class Server extends Application {
             @Override
             protected Void call() throws Exception {
                 while (true) {
-                    socket = serverSocket.accept();
-                    acceptAndSendData(socket);
+                    try {
+                        socket = serverSocket.accept();
+                        acceptAndSendData(socket);
+                    } catch (IOException e) {
+                        portAndUsernamesImageIconsLinkedHashMap.remove(socket.getPort());
+                        socket.close();
+                        e.printStackTrace();
+                        break;
+                    }
                 }
+                return null;
             }
         };
         Thread communicateWithClientThread = new Thread(communicateWithClientTask);
@@ -59,29 +67,34 @@ public class Server extends Application {
             protected Void call() throws IOException {
                 while (true) {
                     try {
-                        ObjectInputStream receivedDataStreamFromClient = new ObjectInputStream(clientSocket.getInputStream());
-                        ArrayList receivedUsernameImageIconFromClientArrayList = (ArrayList) receivedDataStreamFromClient.readObject();
-                        portAndUsernamesImageIconsLinkedHashMap.put(clientSocket.getPort(), receivedUsernameImageIconFromClientArrayList);
+                        if(clientSocket.getInputStream()==null){
+                            clientSocket.close();
+                        }
+                        else {
+                            ObjectInputStream receivedDataStreamFromClient = new ObjectInputStream(clientSocket.getInputStream());
+                            ArrayList receivedUsernameImageIconFromClientArrayList = (ArrayList) receivedDataStreamFromClient.readObject();
+                            portAndUsernamesImageIconsLinkedHashMap.put(clientSocket.getPort(), receivedUsernameImageIconFromClientArrayList);
 
-                        ArrayList dataToSendToClientArrayList = new ArrayList();
-                        dataToSendToClientArrayList.add(clientSocket.getPort());
-                        dataToSendToClientArrayList.add(portAndUsernamesImageIconsLinkedHashMap);
-                        Platform.runLater(() -> {
-                            try {
-                                ObjectOutputStream dataToSendToClientStream;
-                                dataToSendToClientStream = new ObjectOutputStream(clientSocket.getOutputStream());
-                                dataToSendToClientStream.writeObject(dataToSendToClientArrayList);
-                                dataToSendToClientStream.flush();
-                            } catch (IOException e) {
-                                portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
+                            ArrayList dataToSendToClientArrayList = new ArrayList();
+                            dataToSendToClientArrayList.add(clientSocket.getPort());
+                            dataToSendToClientArrayList.add(portAndUsernamesImageIconsLinkedHashMap);
+                            Platform.runLater(() -> {
                                 try {
-                                    clientSocket.close();
-                                } catch (IOException ex) {
-                                    ex.printStackTrace();
+                                    ObjectOutputStream dataToSendToClientStream;
+                                    dataToSendToClientStream = new ObjectOutputStream(clientSocket.getOutputStream());
+                                    dataToSendToClientStream.writeObject(dataToSendToClientArrayList);
+                                    dataToSendToClientStream.flush();
+                                } catch (IOException e) {
+                                    portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
+                                    try {
+                                        clientSocket.close();
+                                    } catch (IOException ex) {
+                                        ex.printStackTrace();
+                                    }
+                                    e.printStackTrace();
                                 }
-                                e.printStackTrace();
-                            }
-                        });
+                            });
+                        }
                     } catch (Exception e) {
                         portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
                         clientSocket.close();
