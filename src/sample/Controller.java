@@ -142,7 +142,8 @@ public class Controller implements Initializable {
                         sendDataToServer(new ImageIcon(getScaledImage(Double.valueOf(320))));
 
                         usernameAndImageViewReceivedArrayList = receiveDataFromServer();
-
+                        if(usernameAndImageViewReceivedArrayList==null)
+                            return null;
                         showData(finalClientImageToBeShown);
                     } catch (Exception e) {
                         socket.close();
@@ -160,7 +161,7 @@ public class Controller implements Initializable {
 
     private void sendDataToServer(ImageIcon finalClientImageToBeSent) {
         Platform.runLater(() -> {
-            ObjectOutputStream dataToSendToServerStream;
+            ObjectOutputStream dataToSendToServerStream = null;
             try {
                 dataToSendToServerStream = new ObjectOutputStream(socket.getOutputStream());
                 ArrayList dataToSendToServerArrayList = new ArrayList();
@@ -181,19 +182,20 @@ public class Controller implements Initializable {
 
     private ArrayList<ArrayList> receiveDataFromServer() throws IOException {
         usernameAndImageViewReceivedArrayList = new ArrayList<ArrayList>();
+        ObjectInputStream receivedDataStreamFromServer = null;
         try {
             AtomicReference<WritableImage> utilityImageConverter;
             ImageIcon receivedImageIcon;
             String receivedUsername;
-            ObjectInputStream receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
-            System.out.println("1sh" + receivedDataStreamFromServer);
+            receivedDataStreamFromServer = new ObjectInputStream(socket.getInputStream());
             ArrayList receivedMainArrayListFromServer = (ArrayList) receivedDataStreamFromServer.readObject();
-            System.out.println("2sh" + receivedMainArrayListFromServer);
+
             Integer thisClientPort = (Integer) receivedMainArrayListFromServer.get(0);
             LinkedHashMap<Integer, ArrayList> portAndUsernameAndImageIconsLinkedHashMap = (LinkedHashMap<Integer, ArrayList>) receivedMainArrayListFromServer.get(1);
             ArrayList<Integer> portNumbers = new ArrayList<Integer>(portAndUsernameAndImageIconsLinkedHashMap.keySet());
             portNumbers.remove(thisClientPort);
             LinkedHashMap<Integer, Boolean> newPortAndShowOthersImagesLinkedHashMap = new LinkedHashMap<>();
+
             for (int j = 0; j < portNumbers.size(); j++) {
                 newPortAndShowOthersImagesLinkedHashMap.put(portNumbers.get(j), oldPortAndShowOthersImagesLinkedHashMap.getOrDefault(portNumbers.get(j), false));
                 receivedUsername = (String) portAndUsernameAndImageIconsLinkedHashMap.get(portNumbers.get(j)).get(0);
@@ -215,12 +217,14 @@ public class Controller implements Initializable {
                     usernameAndImageViewReceivedArrayList.add(tempArrayList);
                 }
             }
+
             oldPortAndShowOthersImagesLinkedHashMap = newPortAndShowOthersImagesLinkedHashMap;
             int oldNumberOfClients = usernameAndImageViewReceivedArrayList.size();
             if (oldNumberOfClients != newNumberOfClients) {
                 newNumberOfClients = oldNumberOfClients;
                 addButtons(portNumbers, usernameAndImageViewReceivedArrayList);
             }
+
             for (int i = 0; i < portNumbers.size(); i++)
                 if (oldPortAndShowOthersImagesLinkedHashMap.get(portNumbers.get(i))) {
                     ImageView tempImageView = (ImageView) usernameAndImageViewReceivedArrayList.get(i).get(1);
@@ -240,8 +244,11 @@ public class Controller implements Initializable {
         } catch (IOException e) {
             socket.close();
             e.printStackTrace();
+            return null;
         } catch (ClassNotFoundException e) {
+            socket.close();
             e.printStackTrace();
+            return null;
         }
         return usernameAndImageViewReceivedArrayList;
     }

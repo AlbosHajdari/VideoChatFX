@@ -1,13 +1,6 @@
 package sample;
 
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.stage.Stage;
-
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,98 +8,41 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-public class Server extends Application {
-    private Socket socket;
-    private ServerSocket serverSocket;
-    private LinkedHashMap<Integer, ArrayList> portAndUsernamesImageIconsLinkedHashMap = new LinkedHashMap<Integer, ArrayList>();
-
+public class Server {
     public static void main(String[] args) {
-        launch(args);
+        new ClientThread().start();
     }
+}
 
-    @Override
-    public void start(Stage primaryStage) {
+class ClientThread extends Thread {
+    static final int PORT = 7800;
+    ServerSocket serverSocket = null;
+    protected Socket socket;
+    private LinkedHashMap<Integer, ArrayList> portAndUsernamesImageIconsLinkedHashMap = new LinkedHashMap<Integer, ArrayList>();
+    public void run() {
         try {
-            serverSocket = new ServerSocket(7800);
-            startConnection();
+            serverSocket = new ServerSocket(PORT);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    @Override
-    public void stop(){
-        //
-    }
-
-    protected void startConnection() {
-        Task<Void> communicateWithClientTask = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                while (true) {
-                    try {
-                        socket = serverSocket.accept();
-                        acceptAndSendData(socket);
-                    } catch (IOException e) {
-                        portAndUsernamesImageIconsLinkedHashMap.remove(socket.getPort());
-                        socket.close();
-                        e.printStackTrace();
-                        break;
-                    }
+        while (true) {
+            try {
+                socket = serverSocket.accept();
+                DataStreamThread dataStreamThread = new DataStreamThread(socket, portAndUsernamesImageIconsLinkedHashMap);
+                dataStreamThread.setDaemon(true);
+                dataStreamThread.start();
+                if(!dataStreamThread.isRunning) {
+                    System.out.println("Client stopped");
+                    portAndUsernamesImageIconsLinkedHashMap.remove(socket.getPort());
+                    socket.close();
+                    dataStreamThread.interrupt();
+                    return;
                 }
-                return null;
+            } catch (IOException e) {
+                System.out.println("Client stopped");
+                System.out.println("I/O error: " + e);
+                return;
             }
-        };
-        Thread communicateWithClientThread = new Thread(communicateWithClientTask);
-        communicateWithClientThread.setDaemon(true);
-        communicateWithClientThread.start();
-    }
-
-    protected void acceptAndSendData(Socket clientSocket) {
-        Task<Void> acceptAndSendDataTask = new Task<Void>() {
-            @Override
-            protected Void call() throws IOException {
-                while (true) {
-                    try {
-                        if(clientSocket.getInputStream()==null){
-                            clientSocket.close();
-                        }
-                        else {
-                            ObjectInputStream receivedDataStreamFromClient = new ObjectInputStream(clientSocket.getInputStream());
-                            ArrayList receivedUsernameImageIconFromClientArrayList = (ArrayList) receivedDataStreamFromClient.readObject();
-                            portAndUsernamesImageIconsLinkedHashMap.put(clientSocket.getPort(), receivedUsernameImageIconFromClientArrayList);
-
-                            ArrayList dataToSendToClientArrayList = new ArrayList();
-                            dataToSendToClientArrayList.add(clientSocket.getPort());
-                            dataToSendToClientArrayList.add(portAndUsernamesImageIconsLinkedHashMap);
-                            Platform.runLater(() -> {
-                                try {
-                                    ObjectOutputStream dataToSendToClientStream;
-                                    dataToSendToClientStream = new ObjectOutputStream(clientSocket.getOutputStream());
-                                    dataToSendToClientStream.writeObject(dataToSendToClientArrayList);
-                                    dataToSendToClientStream.flush();
-                                } catch (IOException e) {
-                                    portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
-                                    try {
-                                        clientSocket.close();
-                                    } catch (IOException ex) {
-                                        ex.printStackTrace();
-                                    }
-                                    e.printStackTrace();
-                                }
-                            });
-                        }
-                    } catch (Exception e) {
-                        portAndUsernamesImageIconsLinkedHashMap.remove(clientSocket.getPort());
-                        clientSocket.close();
-                        e.printStackTrace();
-                        break;
-                    }
-                }
-                return null;
-            }
-        };
-        Thread acceptAndSendDataThread = new Thread(acceptAndSendDataTask);
-        acceptAndSendDataThread.setDaemon(true);
-        acceptAndSendDataThread.start();
+        }
     }
 }
